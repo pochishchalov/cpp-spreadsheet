@@ -144,49 +144,35 @@ namespace ASTImpl {
             }
 
             double Evaluate(const SheetInterface& sheet) const override {
+                double left = lhs_.get()->Evaluate(sheet), right = rhs_.get()->Evaluate(sheet);
                 switch (type_)
                 {
                 case Add:
-                {
-                    if (std::isfinite(lhs_.get()->Evaluate(sheet) + rhs_.get()->Evaluate(sheet))) {
-                        return lhs_.get()->Evaluate(sheet) + rhs_.get()->Evaluate(sheet);
+                    if (std::isfinite(left + right)) {
+                        return left + right;
                     }
-                    else {
-                        throw FormulaError(FormulaError::Category::Arithmetic);
-                    }
-                }
+                    break;
                 case Subtract:
-                {
-                    if (std::isfinite(lhs_.get()->Evaluate(sheet) - rhs_.get()->Evaluate(sheet))) {
-                        return lhs_.get()->Evaluate(sheet) - rhs_.get()->Evaluate(sheet);
+                    if (std::isfinite(left - right)) {
+                        return left - right;
                     }
-                    else {
-                        throw FormulaError(FormulaError::Category::Arithmetic);
-                    }
-                }
+                    break;
                 case Multiply:
-                {
-                    if (std::isfinite(lhs_.get()->Evaluate(sheet) * rhs_.get()->Evaluate(sheet))) {
-                        return lhs_.get()->Evaluate(sheet) * rhs_.get()->Evaluate(sheet);
+                    if (std::isfinite(left * right)) {
+                        return left * right;
                     }
-                    else {
-                        throw FormulaError(FormulaError::Category::Arithmetic);
-                    }
-                }
+                    break;
                 case Divide:
-                {
-                    if (std::isfinite(lhs_.get()->Evaluate(sheet) / rhs_.get()->Evaluate(sheet))) {
-                        return lhs_.get()->Evaluate(sheet) / rhs_.get()->Evaluate(sheet);
+                    if (std::isfinite(left / right)) {
+                        return left / right;
                     }
-                    else {
-                        throw FormulaError(FormulaError::Category::Arithmetic);
-                    }
-                }
+                    break;
                 default:
                     // have to do this because VC++ has a buggy warning
                     assert(false);
                     return HUGE_VAL;
                 }
+                throw FormulaError(FormulaError::Category::Arithmetic);
             }
 
         private:
@@ -224,17 +210,8 @@ namespace ASTImpl {
             }
 
             double Evaluate(const SheetInterface& sheet) const override {
-                switch (type_)
-                {
-                case UnaryPlus:
-                    return operand_.get()->Evaluate(sheet);
-                case UnaryMinus:
-                    return -operand_.get()->Evaluate(sheet);
-                default:
-                    // have to do this because VC++ has a buggy warning
-                    assert(false);
-                    return HUGE_VAL;
-                }
+                return (type_ == UnaryPlus) ? operand_.get()->Evaluate(sheet)
+                    : -operand_.get()->Evaluate(sheet);
             }
 
         private:
