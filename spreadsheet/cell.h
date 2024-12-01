@@ -26,7 +26,7 @@ public:
 
     // Возвращает позиции ячеек на которые ссылается данная ячейка
     std::vector<Position> GetReferencedCells() const override;
-
+    
     // Находит циклические зависимости, используется только при изменении
     // ячейки таблицы методом SetCell
     bool FindCircularDependency(Cell* cell);
@@ -58,16 +58,25 @@ private:
     class TextImpl : public Impl {
     public:
         explicit TextImpl(std::string text, bool apostrophe = false)
-            :value_(std::move(text))
-            , apostrophe_(apostrophe)
+            :text_value_(std::move(text))
+            ,apostrophe_(apostrophe)
         {
         }
-        Value GetValue() const override { return value_; };
+        Value GetValue() const override {
+            try {
+                double value = std::stod(text_value_);
+                return value;
+                
+            }
+            catch (...) {
+                return text_value_;
+            }
+        };
         std::string GetText() const override {
-            return (apostrophe_) ? ESCAPE_SIGN + value_ : value_;
+            return (apostrophe_) ? ESCAPE_SIGN + text_value_ : text_value_;
         };
         std::vector<Position> GetReferencedCells() const override { return {}; }
-        std::string value_;
+        std::string text_value_;
         bool apostrophe_;
     };
     // Формульное представление ячейки
@@ -75,7 +84,7 @@ private:
     public:
         explicit FormulaImpl(std::string expr, const SheetInterface& sheet)
             :formula_(ParseFormula(std::move(expr)))
-            , sheet_(sheet)
+            ,sheet_(sheet)
         {
         }
         Value GetValue() const override {

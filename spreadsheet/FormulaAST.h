@@ -9,7 +9,7 @@
 #include "sheet.h"
 
 namespace ASTImpl {
-    class Expr;
+class Expr;
 }
 
 class ParsingError : public std::runtime_error {
@@ -19,7 +19,7 @@ class ParsingError : public std::runtime_error {
 class FormulaAST {
 public:
     explicit FormulaAST(std::unique_ptr<ASTImpl::Expr> root_expr,
-        std::forward_list<Position> cells);
+                        std::forward_list<Position> cells);
     FormulaAST(FormulaAST&&) = default;
     FormulaAST& operator=(FormulaAST&&) = default;
     ~FormulaAST();

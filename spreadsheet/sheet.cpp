@@ -7,11 +7,12 @@
 #include <functional>
 #include <iostream>
 #include <optional>
+#include <iomanip>
 
 using namespace std::literals;
 
 void Sheet::MaybeIncreaseSizeToIncludePosition(Position pos) {
-    if (size_.rows < pos.row + 1) {
+    if (size_.rows < pos.row + 1 ) {
         size_.rows = pos.row + 1;
     }
     if (size_.cols < pos.col + 1) {
@@ -43,24 +44,24 @@ void Sheet::SetCell(Position pos, std::string text) {
         cell = NewCell(pos);
     }
     else {
-        // Р•СЃР»Рё С‚РµРєСЃС‚ РІ СЏС‡РµР№РєРµ РЅРµ РѕС‚Р»РёС‡Р°РµС‚СЃСЏ, С‚Рѕ РЅРёС‡РµРіРѕ РЅРµ РїСЂРѕРёСЃС…РѕРґРёС‚
+        // Если текст в ячейке не отличается, то ничего не происходит
         if (cell->GetText() == text) {
             return;
         }
     }
-    // Р’СЂРµРјРµРЅРЅР°СЏ СЏС‡РµР№РєР°, РіР°СЂР°РЅС‚РёСЂСѓРµС‚ РЅРµРёР·РјРµРЅРЅРѕСЃС‚СЊ Р·РЅР°С‡РµРЅРёСЏ РїСЂРё РІС‹Р±СЂР°СЃС‹РІР°РЅРёРё РёСЃРєР»СЋС‡РµРЅРёСЏ
-    std::unique_ptr<Cell> temp_cell(new Cell(*this));
+    // Временная ячейка, гарантирует неизменность значения при выбрасывании исключения
+    std::unique_ptr<Cell> temp_cell (new Cell(*this));
     try {
         temp_cell->Set(text);
     }
-    catch (InvalidPositionException& exc) {
+    catch (InvalidPositionException &exc) {
         if (is_new_cell) {
             data_.erase(pos);
             size_ = old_size;
         }
         throw exc;
     }
-    // РџСЂРѕРІРµСЂРєР° РЅР° С†РёРєР»РёС‡РµСЃРєСѓСЋ Р·Р°РІРёСЃРёРјРѕСЃС‚СЊ СЏС‡РµРµРє
+    // Проверка на циклическую зависимость ячеек
     if (temp_cell->FindCircularDependency(cell)) {
         if (is_new_cell) {
             data_.erase(pos);
@@ -100,7 +101,7 @@ void Sheet::ClearCell(Position pos) {
     }
     auto cell = GetConcreteCell(pos);
     if (cell != nullptr) {
-        // Р•СЃР»Рё РЅР° СЏС‡РµР№РєСѓ СЃСЃР»С‹Р»Р°СЋС‚СЃСЏ РґСЂСѓРіРёРµ СЏС‡РµР№РєРё - СЏС‡РµР№РєР° РЅРµ СѓРґР°Р»СЏРµС‚СЃСЏ, Р° С‚РѕР»СЊРєРѕ РѕС‡РёС‰СЏРµС‚СЃСЏ РµРµ Р·РЅР°С‡РµРЅРёРµ
+        // Если на ячейку сслылаются другие ячейки - ячейка не удаляется, а только очищяется ее значение
         if (cell->IsReferenced()) {
             cell->Clear();
         }
@@ -109,12 +110,135 @@ void Sheet::ClearCell(Position pos) {
             data_.erase(pos);
             MaybeFitSizeToClearPosition(pos);
         }
-    }
+    } 
 }
 
 Size Sheet::GetPrintableSize() const {
     return size_;
 }
+
+int GetRowsHeaderSize(int rows) {
+    int result = 0;
+    while (rows > 0) {
+        rows /= 10;
+        ++result;
+    }
+    return result;
+}
+
+std::string Sheet::GetBoundary(int width) const {
+    std::string result;
+    auto size = GetPrintableSize();
+    int rows_header_size = GetRowsHeaderSize(size.rows);
+    for (size_t i = 0; i < rows_header_size; ++i) {
+        result += '-';
+    }
+    result += '|';
+    for (int i = 0; i < size.cols; ++i)
+    {
+        for (int j = 0; j < width; ++j) {
+            result += '-';
+        }
+        result += '|';
+    }
+    
+    return result;
+}
+
+void Sheet::PrintTableHeader(std::ostream& output) const {
+    int rows_header_size = GetRowsHeaderSize(size_.rows);
+    for (size_t i = 0; i < rows_header_size; ++i) {
+        output << ' ';
+    }
+    output << '|';
+    for (size_t i = 0; i < size_.cols; ++i)
+    {
+        int c = i;
+        std::string result;
+        result.reserve(17);
+        while (c >= 0) {
+            result.insert(result.begin(), 'A' + c % 26);
+            c = c / 26 - 1;
+        }
+        output << std::setw(12) << result << '|';
+    }
+    output << '\n';
+}
+
+void Sheet::PrintValues(std::ostream& output) const {
+    PrintTableHeader(output);
+    int rows_header_size = GetRowsHeaderSize(size_.rows);
+    output << GetBoundary(12) << '\n';
+    for (int y = 0; y < size_.rows; ++y) {
+        bool is_first = true;
+        for (int x = 0; x < size_.cols; ++x) {
+            if (is_first) {
+                output << std::setw(rows_header_size) << y + 1 << '|';
+            }
+            else {
+                output << '|';
+            }
+            is_first = false;
+            const auto cell = GetCell({ y, x });
+            if (cell == nullptr) {
+                output << "            "s;
+                continue;
+            }
+            const auto& value = cell->GetValue();
+            if (std::holds_alternative<double>(value)) {
+                output << std::setw(12) << std::get<double>(value);
+            }
+            else if (std::holds_alternative<std::string>(value)) {
+                std::string text = std::get<std::string>(value);
+                if (text.size() <= 12) {
+                    output << std::setw(12) << text;
+                }
+                else {
+                    output << std::string_view(text.data(), 9) << "..."s;
+                }
+            }
+            else {
+                output << std::setw(12) << std::get<FormulaError>(value);
+            }
+        }
+        output << '|' << '\n' << GetBoundary(12) << '\n';
+    }
+}
+
+void Sheet::PrintTexts(std::ostream& output) const {
+    PrintTableHeader(output);
+    int rows_header_size = GetRowsHeaderSize(size_.rows);
+    output << GetBoundary(12) << '\n';
+    for (int y = 0; y < size_.rows; ++y) {
+        bool is_first = true;
+        for (int x = 0; x < size_.cols; ++x) {
+            if (is_first) {
+                output << std::setw(rows_header_size) << y + 1 << '|';
+            }
+            else {
+                output << '|';
+            }
+            is_first = false;
+            const auto cell = GetCell({ y, x });
+            if (cell == nullptr) {
+                output << "            "s;
+                continue;
+            }
+            std::string  text = cell->GetText();
+            if (text.size() <= 12) {
+                output << std::setw(12) << text;
+            }
+            else {
+                output << std::string_view(text.data(), 9) << "..."s;
+            }
+        }
+        output << '|' << '\n' << GetBoundary(12) << '\n';
+    }
+}
+
+/*
+
+* old versions
 
 void Sheet::PrintValues(std::ostream& output) const {
     for (int y = 0; y < size_.rows; ++y) {
@@ -155,11 +279,12 @@ void Sheet::PrintTexts(std::ostream& output) const {
             if (cell == nullptr) {
                 continue;
             }
-            output << cell->GetText();
+            output << cell->GetText(); 
         }
         output << '\n';
     }
 }
+*/
 
 Cell* Sheet::NewCell(Position pos) {
     MaybeIncreaseSizeToIncludePosition(pos);

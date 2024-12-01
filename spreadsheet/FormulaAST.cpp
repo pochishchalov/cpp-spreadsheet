@@ -145,34 +145,32 @@ public:
 
     double Evaluate(const SheetInterface& sheet) const override {
         double left = lhs_.get()->Evaluate(sheet), right = rhs_.get()->Evaluate(sheet);
+        double result = HUGE_VAL;
         switch (type_)
         {
         case Add:
-            if (std::isfinite(left + right)) {
-                return left + right;
-            }
+            result = left + right;
             break;
         case Subtract:
-            if (std::isfinite(left - right)) {
-                return left - right;
-            }
+            result = left - right;
             break;
         case Multiply:
-            if (std::isfinite(left * right)) {
-                return left * right;
-            }
+            result = left * right;
             break;
         case Divide:
-            if (std::isfinite(left / right)) {
-                return left / right;
-            }
+            result = left / right;
             break;
         default:
             // have to do this because VC++ has a buggy warning
             assert(false);
             return HUGE_VAL;
         }
-        throw FormulaError(FormulaError::Category::Arithmetic);
+        if (std::isfinite(result)) {
+            return result;
+        }
+        else {
+            throw FormulaError(FormulaError::Category::Arithmetic);
+        }
     }
 
 private:

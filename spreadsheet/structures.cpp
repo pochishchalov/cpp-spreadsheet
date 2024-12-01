@@ -8,7 +8,7 @@ const int LETTERS = 26;
 const int MAX_POSITION_LENGTH = 17;
 const int MAX_POS_LETTER_COUNT = 3;
 
-const Position Position::NONE = { -1, -1 };
+const Position Position::NONE = {-1, -1};
 
 bool Position::operator==(const Position rhs) const {
     return row == rhs.row && col == rhs.col;
@@ -43,7 +43,7 @@ std::string Position::ToString() const {
 Position Position::FromString(std::string_view str) {
     auto it = std::find_if(str.begin(), str.end(), [](const char c) {
         return !(std::isalpha(c) && std::isupper(c));
-        });
+    });
     auto letters = str.substr(0, it - str.begin());
     auto digits = str.substr(it - str.begin());
 
@@ -59,7 +59,7 @@ Position Position::FromString(std::string_view str) {
     }
 
     int row;
-    std::istringstream row_in{ std::string{digits} };
+    std::istringstream row_in{std::string{digits}};
     if (!(row_in >> row) || !row_in.eof()) {
         return Position::NONE;
     }
@@ -70,7 +70,7 @@ Position Position::FromString(std::string_view str) {
         col += ch - 'A' + 1;
     }
 
-    return { row - 1, col - 1 };
+    return {row - 1, col - 1};
 }
 
 bool Size::operator==(Size rhs) const {

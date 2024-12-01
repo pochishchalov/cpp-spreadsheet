@@ -7,7 +7,7 @@
 
 Cell::Cell(Sheet& sheet)
     :impl_(std::make_unique<EmptyImpl>())
-    , sheet_(sheet)
+    ,sheet_(sheet)
 {
 }
 
@@ -27,13 +27,13 @@ void Cell::Set(std::string text) {
     if (*iter == ESCAPE_SIGN) {
         ++iter;
         impl_.reset(new TextImpl(std::string{ std::make_move_iterator(iter),
-        std::make_move_iterator(text.end()) }, true));
+        std::make_move_iterator(text.end())}, true));
         return;
     }
     else {
         impl_.reset(new TextImpl(std::string{ std::make_move_iterator(iter),
             std::make_move_iterator(text.end()) }));
-    }
+    } 
 }
 
 void Cell::Clear() {
@@ -100,7 +100,7 @@ void Cell::EraseParent(Cell* parent) {
 void Cell::CacheInvalidation() {
     cache_value_.reset();
     for (auto& parent : parents_) {
-
+        
         parent->CacheInvalidation();
     }
 }

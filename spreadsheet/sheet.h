@@ -10,11 +10,11 @@ class Cell;
 
 class Sheet : public SheetInterface {
 public:
-    // РЈСЃС‚Р°РЅР°РІР»РёРІР°РµС‚ Р·РЅР°С‡РµРЅРёРµ СЏС‡РµР№РєРё,
-    // РіР°СЂР°РЅС‚РёСЂСѓРµС‚ РєРѕРЅСЃРёСЃС‚РµРЅС‚РЅРѕРµ СЃРѕСЃС‚РѕСЏРЅРёРµ С‚Р°Р±Р»РёС†С‹
+    // Устанавливает значение ячейки,
+    // гарантирует консистентное состояние таблицы
     void SetCell(Position pos, std::string text) override;
 
-    // РЎРѕР·РґР°РµС‚ РЅРѕРІСѓСЋ РїСѓСЃС‚СѓСЋ СЏС‡РµР№РєСѓ С‚Р°Р±Р»РёС†С‹
+    // Создает новую пустую ячейку таблицы
     Cell* NewCell(Position pos);
 
     const CellInterface* GetCell(Position pos) const override;
@@ -22,28 +22,31 @@ public:
 
     void ClearCell(Position pos) override;
 
-    // Р’РѕР·РІСЂР°С‰Р°РµС‚ СЂР°Р·РјРµСЂ РїРµС‡Р°С‚РЅРѕР№ РѕР±Р»Р°СЃС‚Рё С‚Р°Р±Р»РёС†С‹
+    // Возвращает размер печатной области таблицы
     Size GetPrintableSize() const override;
 
-    // Р’С‹РІРѕРґРёС‚ Р·РЅР°С‡РµРЅРёСЏ СЏС‡РµРµРє С‚Р°Р±Р»РёС†С‹ РІ РїРѕС‚РѕРє
+    // Выводит значения ячеек таблицы в поток
     void PrintValues(std::ostream& output) const override;
 
-    // Р’С‹РІРѕРґРёС‚ С‚РµРєСЃС‚ СЏС‡РµРµРє С‚Р°Р±Р»РёС†С‹ РІ РїРѕС‚РѕРє
+    // Выводит текст ячеек таблицы в поток
     void PrintTexts(std::ostream& output) const override;
-
+    
     const Cell* GetConcreteCell(Position pos) const;
     Cell* GetConcreteCell(Position pos);
-
+    
 private:
     std::unordered_map<Position, std::unique_ptr<Cell>, PositionHash> data_;
     Size size_;
 
-    // РџСЂРё РЅРµРѕР±С…РѕРґРёРјРѕСЃС‚Рё СѓРІРµР»РёС‡РёРІР°РµС‚ РїРµС‡Р°С‚РЅСѓСЋ РѕР±Р»Р°СЃС‚СЊ С‚Р°Р±Р»РёС†С‹,
-    // РІС‹Р·С‹РІР°РµС‚СЃСЏ С‚РѕР»СЊРєРѕ РІ РјРµС‚РѕРґРµ NewCell
+    // При необходимости увеличивает печатную область таблицы,
+    // вызывается только в методе NewCell
     void MaybeIncreaseSizeToIncludePosition(Position pos);
 
-    // РџСЂРё РЅРµРѕР±С…РѕРґРёРјРѕСЃС‚Рё СѓРјРµРЅСЊС€Р°РµС‚ РїРµС‡Р°С‚РЅСѓСЋ РѕР±Р»Р°СЃС‚СЊ С‚Р°Р±Р»РёС†С‹,
-    // РІС‹Р·С‹РІР°РµС‚СЃСЏ С‚РѕР»СЊРєРѕ РІ РјРµС‚РѕРґРµ ClearCell 
+    // При необходимости уменьшает печатную область таблицы,
+    // вызывается только в методе ClearCell 
     void MaybeFitSizeToClearPosition(Position pos);
+
+    std::string GetBoundary(int width) const;
+    void PrintTableHeader(std::ostream& output) const;
 
 };
