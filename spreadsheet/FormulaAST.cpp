@@ -240,35 +240,22 @@ public:
     }
 
     double Evaluate(const SheetInterface& sheet) const override {
-        try {
-            auto cell = sheet.GetCell(*cell_);
-            if (cell == nullptr) {
-                return .0;
-            }
-            const auto value = cell->GetValue();
-            if (std::holds_alternative<std::string>(value)) {
-                std::string result = std::get<std::string>(value);
-                for (const char ch : result) {
-                    if (!std::isdigit(ch) && ch != '.') {
-                        throw std::get<FormulaError>(value);
-                    }
-                }
-                return std::stod(result);
-            }
-            else if (std::holds_alternative<double>(value)) {
-                return std::get<double>(value);
-            }
-            else {
-                throw std::get<FormulaError>(value);
-            }
+        auto cell = sheet.GetCell(*cell_);
+        if (cell == nullptr) {
+            throw FormulaError::Category::Ref;
         }
-        catch (FormulaError formula_error) {
-            throw formula_error;
+        const auto value = cell->GetValue();
+        if (std::holds_alternative<std::string>(value)) {
+            std::string result = std::get<std::string>(value);
+            throw (result.empty())? FormulaError(FormulaError::Category::Ref)
+                :FormulaError(FormulaError::Category::Value);
         }
-        catch (...) {
-            throw FormulaError(FormulaError::Category::Value);
+        else if (std::holds_alternative<double>(value)) {
+            return std::get<double>(value);
         }
-        
+        else {
+            throw std::get<FormulaError>(value);
+        }
     }
 
 private:

@@ -166,6 +166,10 @@ void Sheet::PrintTableHeader(std::ostream& output) const {
 }
 
 void Sheet::PrintValues(std::ostream& output) const {
+    if (size_ == Size{ 0, 0 }) {
+        output << "empty sheet\n"s;
+        return;
+    };
     PrintTableHeader(output);
     int rows_header_size = GetRowsHeaderSize(size_.rows);
     output << GetBoundary(12) << '\n';
@@ -206,6 +210,10 @@ void Sheet::PrintValues(std::ostream& output) const {
 }
 
 void Sheet::PrintTexts(std::ostream& output) const {
+    if (size_ == Size{ 0, 0 }) {
+        output << "empty sheet"s;
+        return;
+    };
     PrintTableHeader(output);
     int rows_header_size = GetRowsHeaderSize(size_.rows);
     output << GetBoundary(12) << '\n';

@@ -50,7 +50,7 @@ private:
     // Пустая ячейка
     class EmptyImpl : public Impl {
     public:
-        Value GetValue() const override { return 0.0; };
+        Value GetValue() const override { return std::string{}; };
         std::string GetText() const override { return {}; };
         std::vector<Position> GetReferencedCells() const override { return {}; }
     };

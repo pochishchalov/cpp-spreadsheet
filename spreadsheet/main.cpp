@@ -131,8 +131,13 @@ int main() {
 				}
 				else {
 					auto cell = sheet->GetCell(Position::FromString(command));
-					std::cout << "Value: "s << cell->GetValue() << "; "s
-						<< "Text: "s << cell->GetText() << std::endl;
+					if (cell == nullptr) {
+						std::cout << "empty cell\n"s;
+					}
+					else {
+						std::cout << "value: "s << cell->GetValue() << "; "s
+							<< "text: "s << cell->GetText() << std::endl;
+					}
 				}
 				break;
 			}

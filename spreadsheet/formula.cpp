@@ -10,7 +10,21 @@
 using namespace std::literals;
 
 std::ostream& operator<<(std::ostream& output, FormulaError fe) {
-    return output << "#ARITHM!";
+    switch (fe.GetCategory())
+    {
+    case FormulaError::Category::Arithmetic:
+    {
+        return output << "#ARITHM!";
+    }
+    case FormulaError::Category::Value:
+    {
+        return output << "#VALUE!";
+    }
+    default:
+    {
+        return output << "#REF!";
+    }
+    }
 }
 
 namespace {
